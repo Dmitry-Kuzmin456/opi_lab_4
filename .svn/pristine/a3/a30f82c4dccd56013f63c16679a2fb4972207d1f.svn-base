@@ -1,0 +1,3 @@
+app.title=Web programming lab 3
+db.save.ok=Point saved successfully
+db.save.error=Failed to save point

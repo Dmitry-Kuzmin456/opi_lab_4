@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+<h:head>
+   <meta charset="UTF-8"/>
+   <title>الصفحة الرئيسية</title>
+   <link rel="icon" type="image/png" href="#{resource['img/duck1.jpg']}"/>
+   <h:outputStylesheet name="css/style.css"/>
+</h:head>
+<h:body>
+
+   <header>
+      <h1>مختبر الويب رقم 3</h1>
+      <table class="header-table">
+         <tr>
+            <td class="left"><h:graphicImage name="img/duck_without_background_2.png" styleClass="duck" alt="duck 1"/></td>
+            <td>
+               <p>أكمله: كوزمين ديمتري أناتوليفيتش</p>
+               <p>المجموعة: P3209</p>
+               <p>رقم الخيار: 13216</p>
+            </td>
+            <td class="right"><h:graphicImage name="img/duck_without_background_1.png" styleClass="duck" alt="duck 2"/></td>
+         </tr>
+      </table>
+   </header>
+
+   <main class="start-page-main">
+      <div id="clock" class="clock">تحميل...</div>
+
+      <h:link styleClass="nav-link main-page-link" value="بيت" outcome="main"/>
+   </main>
+
+   <h:outputScript name="js/time.js"/>
+
+</h:body>
+</html>

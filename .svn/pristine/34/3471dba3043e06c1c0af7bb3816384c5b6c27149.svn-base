@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <meta charset="UTF-8"/>
+    <title>Лабораторная работа №3</title>
+    <link rel="icon" type="image/png" href="#{resource['img/duck1.jpg']}"/>
+    <h:outputStylesheet name="css/style.css"/>
+</h:head>
+
+<h:body>
+
+    <header>
+        <h1>Лабораторная работа по вебу №3</h1>
+        <table class="header-table">
+            <tr>
+                <td class="left"><h:graphicImage name="img/duck_without_background_2.png" styleClass="duck" alt="duck 1"/></td>
+                <td>
+                    <p>Выполнил: Кузьмин Дмитрий Анатольевич</p>
+                    <p>Группа: P3209</p>
+                    <p>Номер варианта: 13216</p>
+                    <h:link styleClass="nav-link" value="Начальная страница" outcome="index"/>
+                </td>
+                <td class="right"><h:graphicImage name="img/duck_without_background_1.png" styleClass="duck" alt="duck 2"/></td>
+            </tr>
+        </table>
+    </header>
+
+    <main>
+        <h:form id="main-form">
+            <table class="layout-table">
+                <tr>
+                    <td class="input-panel">
+                        <div class="form-row">
+                            <span class="form-label">X:</span>
+                            <p:spinner id="x-spinner" value="#{formBean.x}"
+                                       min="-3" max="3" step="1"
+                                       styleClass="x-spinner"/>
+                        </div>
+
+                        <div class="form-row">
+                            <span class="form-label">Y:</span>
+                            <h:inputText id="y-input" value="#{formBean.y}"
+                                         styleClass="y-text-input"
+                                         placeholder="Введите Y (-5...5)"/>
+                        </div>
+
+                        <div class="form-row">
+                            <span class="form-label">R:</span>
+                            <h:selectOneRadio id="r-radio" value="#{formBean.r}"
+                                              layout="pageDirection"
+                                              styleClass="r-radio-group"
+                                              onchange="drawGraph();">
+                                <f:selectItem itemValue="1" itemLabel="1"/>
+                                <f:selectItem itemValue="2" itemLabel="2"/>
+                                <f:selectItem itemValue="3" itemLabel="3"/>
+                                <f:selectItem itemValue="4" itemLabel="4"/>
+                                <f:selectItem itemValue="5" itemLabel="5"/>
+                            </h:selectOneRadio>
+                        </div>
+                        <h:inputHidden id="points-data" value="#{points.pointsJson}" />
+
+                        <div class="form-row">
+                            <p:commandButton id="submit-button" value="Отправить"
+                                             action="#{formBean.submit}"
+                                             update="results-table messages-panel points-data lastX lastY lastR lastHit status"
+                                             styleClass="submit-button"
+                                             oncomplete="drawNewPoint();" />
+                        </div>
+
+                        <h:panelGroup id="messages-panel">
+                            <h:messages styleClass="error-messages" globalOnly="true"/>
+                        </h:panelGroup>
+
+                        <h:inputHidden id="lastX" value="#{formBean.lastX}" />
+                        <h:inputHidden id="lastY" value="#{formBean.lastY}" />
+                        <h:inputHidden id="lastR" value="#{formBean.lastR}" />
+                        <h:inputHidden id="lastHit" value="#{formBean.lastHit}" />
+                        <h:inputHidden id="status" value="#{formBean.status}" />
+                    </td>
+
+                    <td class="graph-panel">
+                        <div class="canvas-container">
+                            <canvas id="graph-canvas" width="400" height="400"></canvas>
+                            <canvas id="points-canvas" width="400" height="400"></canvas>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </h:form>
+
+        <section class="results_section">
+            <div class="table-container">
+                <p:dataTable id="results-table" value="#{points.points}" var="point"
+                             styleClass="results-table" emptyMessage="Таблица результатов пуста">
+                    <p:column headerText="X"><h:outputText value="#{point.x}"/></p:column>
+                    <p:column headerText="Y"><h:outputText value="#{point.y}"/></p:column>
+                    <p:column headerText="R"><h:outputText value="#{point.r}"/></p:column>
+                    <p:column headerText="Результат">
+                        <h:outputText value="#{point.status ? 'Попадание' : 'Промах'}"
+                                      styleClass="#{point.status ? 'hit-result' : 'miss-result'}"/>
+                    </p:column>
+                </p:dataTable>
+            </div>
+        </section>
+    </main>
+
+    <div id="notification-container" class="notification-container">
+        <div id="notification" class="notification">
+            <div id="notification-message" class="notification-message"></div>
+            <button id="notification-close" class="notification-close" onclick="hideNotification()">OK</button>
+        </div>
+    </div>
+
+    <h:outputScript name="js/script.js"/>
+</h:body>
+</html>

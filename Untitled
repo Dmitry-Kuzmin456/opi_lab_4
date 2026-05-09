@@ -1,0 +1,8 @@
+<target name="diff">
+    <exec executable="bash" failonerror="true">
+        <!-- Указываем путь к скрипту -->
+        <arg value="scripts/svn_diff_commit.sh"/>
+        <!-- Передаем список разрешенных файлов из build.properties -->
+        <arg value="${allowed.diff.classes}"/>
+    </exec>
+</target>

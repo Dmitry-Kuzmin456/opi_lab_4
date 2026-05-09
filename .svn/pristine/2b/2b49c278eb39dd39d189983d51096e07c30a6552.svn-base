@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="web-lab-3" default="build" basedir=".">
+    <property file="build.properties"/>
+
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${test.classes.dir}"/>
+        <mkdir dir="${lib.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${reports.dir}/junit"/>
+        <mkdir dir="${tmp.dir}"/>
+        <mkdir dir="${doc.dir}"/>
+    </target>
+
+    <target name="resolve-deps" depends="init">
+        <exec executable="mvn" failonerror="true">
+            <arg value="-q"/>
+            <arg value="dependency:copy-dependencies"/>
+            <arg value="-DincludeScope=test"/>
+            <arg value="-DoutputDirectory=${lib.dir}"/>
+        </exec>
+    </target>
+
+    <target name="prepare-manifest">
+        <copy file="${manifest.template}" tofile="${manifest.file}" overwrite="true"/>
+        <manifest file="${manifest.file}" mode="update">
+            <attribute name="Implementation-Version" value="${project.version}"/>
+            <attribute name="Main-Class" value="${main.class}"/>
+        </manifest>
+    </target>
+
+    <target name="compile" depends="resolve-deps">
+        <javac srcdir="${src.dir}"
+               destdir="${classes.dir}"
+               includeantruntime="false"
+               source="${java.source}"
+               target="${java.target}"
+               encoding="${encoding}">
+            <classpath refid="compile.classpath"/>
+        </javac>
+        <copy todir="${classes.dir}">
+            <fileset dir="${resources.dir}" erroronmissingdir="false"/>
+        </copy>
+    </target>
+
+    <target name="build" depends="compile,prepare-manifest">
+        <jar destfile="${jar.path}" manifest="${manifest.file}">
+            <fileset dir="${classes.dir}"/>
+        </jar>
+    </target>
+
+    <target name="build-war" depends="compile">
+        <war destfile="${war.path}" webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}" excludes="WEB-INF/web.xml"/>
+            <classes dir="${classes.dir}"/>
+            <lib dir="${lib.dir}"/>
+        </war>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+        <delete file="${manifest.file}"/>
+    </target>
+
+    <target name="test" depends="build">
+        <javac srcdir="${test.src.dir}"
+               destdir="${test.classes.dir}"
+               includeantruntime="false"
+               source="${java.source}"
+               target="${java.target}"
+               encoding="${encoding}"
+               failonerror="false">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <pathelement path="${classes.dir}"/>
+            </classpath>
+        </javac>
+        <junit printsummary="true" haltonfailure="true" fork="true">
+            <classpath>
+                <path refid="compile.classpath"/>
+                <pathelement path="${classes.dir}"/>
+                <pathelement path="${test.classes.dir}"/>
+            </classpath>
+            <formatter type="xml"/>
+            <batchtest todir="${reports.dir}/junit">
+                <fileset dir="${test.src.dir}" includes="**/*Test.java" erroronmissingdir="false"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="scp" depends="build,build-war">
+        <exec executable="scp" failonerror="true">
+            <arg value="${scp.target.file}"/>
+            <arg value="${scp.host}:${scp.remote.dir}/"/>
+        </exec>
+    </target>
+
+    <target name="xml">
+        <xmlvalidate lenient="true" warn="true">
+            <fileset dir="${xml.validation.root}"
+                     includes="${xml.includes}"
+                     excludes="${xml.excludes}"/>
+        </xmlvalidate>
+    </target>
+
+    <target name="native2ascii" depends="init">
+        <mkdir dir="${native2ascii.dir}"/>
+        <native2ascii src="${locales.dir}"
+                      dest="${native2ascii.dir}"
+                      encoding="${encoding}"
+                      includes="**/*.properties"
+                      ext=".ascii.properties"/>
+    </target>
+
+    <target name="doc" depends="build">
+        <mkdir dir="${doc.dir}/javadoc"/>
+        <javadoc sourcepath="${src.dir}"
+                 destdir="${doc.dir}/javadoc"
+                 classpathref="compile.classpath"
+                 encoding="${encoding}"
+                 failonerror="false"/>
+
+        <checksum file="${jar.path}" algorithm="MD5" property="jar.md5"/>
+        <checksum file="${jar.path}" algorithm="SHA-1" property="jar.sha1"/>
+
+        <manifest file="${manifest.file}" mode="update">
+            <attribute name="Project-MD5" value="${jar.md5}"/>
+            <attribute name="Project-SHA1" value="${jar.sha1}"/>
+        </manifest>
+
+        <jar destfile="${jar.path}" update="true" manifest="${manifest.file}">
+            <zipfileset dir="${doc.dir}/javadoc" prefix="javadoc"/>
+        </jar>
+    </target>
+
+    <target name="music" depends="build">
+        <exec executable="afplay" failonerror="false">
+            <arg value="${music.file}"/>
+        </exec>
+    </target>
+
+    <target name="history">
+        <exec executable="bash" failonerror="true">
+            <arg value="-lc"/>
+            <arg value="set -e; head_rev=$$(svn info --show-item revision); work_rev=$$head_rev; ok_rev=''; while [ -n &quot;$$work_rev&quot; ] &amp;&amp; [ &quot;$$work_rev&quot; -ge 1 ]; do svn up -r $$work_rev &gt;/dev/null; if ant -q compile; then ok_rev=$$work_rev; break; fi; if [ &quot;$$work_rev&quot; -eq 1 ]; then break; fi; work_rev=$$((work_rev-1)); done; if [ -z &quot;$$ok_rev&quot; ]; then echo 'No compilable svn revision found'; exit 1; fi; next_rev=$$((ok_rev+1)); if [ $$next_rev -le $$head_rev ]; then svn diff -c $$next_rev &gt; ${dist.dir}/history-last-working.diff; fi; echo Last compilable revision: $$ok_rev"/>
+        </exec>
+    </target>
+
+    <target name="diff">
+        <exec executable="bash" failonerror="true">
+            <arg value="-lc"/>
+            <arg value="set -e; changed=$$(svn status | awk '/^[AMR]/{print $$2}'); if [ -z &quot;$$changed&quot; ]; then echo 'No svn changes'; exit 0; fi; allow='${allowed.diff.classes}'; forbidden=''; for f in $$changed; do base=$$(basename $$f); case &quot;,$$allow,&quot; in *,&quot;$$base&quot;,*) ;; *) forbidden=&quot;$$forbidden $$f&quot;; esac; done; if [ -n &quot;$$forbidden&quot; ]; then echo &quot;Forbidden files changed: $$forbidden&quot;; exit 1; fi; svn commit -m 'Auto commit from Ant diff target'"/>
+        </exec>
+    </target>
+
+    <target name="alt" depends="build,init">
+        <delete dir="${alt.dir}"/>
+        <mkdir dir="${alt.dir}/src"/>
+        <copy todir="${alt.dir}/src">
+            <fileset dir="${src.dir}"/>
+        </copy>
+        <replace dir="${alt.dir}/src" includes="**/*.java"
+                 token="${alt.replace.1.match}" value="${alt.replace.1.value}"/>
+        <replaceregexp byline="true" flags="g"
+                       match="${alt.replace.2.match}"
+                       replace="${alt.replace.2.value}">
+            <fileset dir="${alt.dir}/src" includes="**/*.java"/>
+        </replaceregexp>
+        <move file="${alt.dir}/src/managerBeans/AreaChecker.java"
+              tofile="${alt.dir}/src/managerBeans/AreaScanner.java"
+              failonerror="false"/>
+        <move file="${alt.dir}/src/managerBeans/DataBaseManager.java"
+              tofile="${alt.dir}/src/managerBeans/StorageService.java"
+              failonerror="false"/>
+
+        <mkdir dir="${alt.dir}/classes"/>
+        <javac srcdir="${alt.dir}/src"
+               destdir="${alt.dir}/classes"
+               includeantruntime="false"
+               source="${java.source}"
+               target="${java.target}"
+               encoding="${encoding}">
+            <classpath refid="compile.classpath"/>
+        </javac>
+        <jar destfile="${alt.jar.path}" manifest="${manifest.file}">
+            <fileset dir="${alt.dir}/classes"/>
+        </jar>
+    </target>
+
+    <target name="report" depends="test">
+        <pathconvert property="junit.report.matches" pathsep=",">
+            <fileset dir="${reports.dir}/junit" includes="TEST-*.xml"/>
+        </pathconvert>
+        <fail unless="junit.report.matches">JUnit XML report not found.</fail>
+        <exec executable="bash" failonerror="true">
+            <arg value="-lc"/>
+            <arg value="set -e; git add -f ${reports.dir}/junit; if git diff --cached --quiet; then echo 'No report changes to commit'; else git commit -m 'Add junit xml report'; fi"/>
+        </exec>
+    </target>
+
+    <target name="team" depends="init,resolve-deps">
+        <delete dir="${tmp.dir}/team"/>
+        <mkdir dir="${tmp.dir}/team"/>
+        <exec executable="bash" failonerror="true">
+            <arg value="-lc"/>
+            <arg value="set -e; base_rev=$$(svn info --show-item revision); first_code_rev=$$(svn log -q ^/trunk/build.xml | awk '/^r/{rev=substr($$1,2)} END{print rev}'); start=$$((base_rev-4)); [ $$start -lt $$first_code_rev ] &amp;&amp; start=$$first_code_rev; end=$$((base_rev-1)); [ $$end -lt $$start ] &amp;&amp; end=$$start; for rev in $$(seq $$start $$end); do dst='${tmp.dir}/team/r'$$rev; svn export -q -r $$rev . $$dst; cp build.xml build.properties manifest.base.mf $$dst/; ant -q -f $$dst/build.xml -Ddist.dir=$$dst/dist -Dbuild.dir=$$dst/build build; done"/>
+        </exec>
+        <zip destfile="${dist.dir}/team-revisions.zip">
+            <fileset dir="${tmp.dir}/team" includes="**/dist/*.jar"/>
+        </zip>
+    </target>
+</project>

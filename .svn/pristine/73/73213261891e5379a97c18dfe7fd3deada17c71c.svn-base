@@ -1,0 +1,14 @@
+<datasources xmlns="urn:jboss:domain:datasources:5.0">
+    <datasource jndi-name="java:/jdbc/studs" pool-name="studs" enabled="true" use-java-context="true">
+        <connection-url>jdbc:postgresql://localhost:5432/points_results</connection-url>
+        <driver>postgresql-42.7.4.jar</driver>
+        <security>
+            <user-name>postgres</user-name>
+        </security>
+    </datasource>
+    <drivers>
+        <driver name="postgresql" module="org.postgresql">
+            <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+        </driver>
+    </drivers>
+</datasources>

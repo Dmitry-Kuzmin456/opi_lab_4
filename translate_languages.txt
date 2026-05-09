@@ -1,0 +1,46 @@
+Available languages for `translate` target (LibreTranslate-style codes):
+
+1) English - en
+   ant -Dtranslate.lang=en translate
+
+2) Russian - ru
+   ant -Dtranslate.lang=ru translate
+
+3) German - de
+   ant -Dtranslate.lang=de translate
+
+4) French - fr
+   ant -Dtranslate.lang=fr translate
+
+5) Spanish - es
+   ant -Dtranslate.lang=es translate
+
+6) Italian - it
+   ant -Dtranslate.lang=it translate
+
+7) Portuguese - pt
+   ant -Dtranslate.lang=pt translate
+
+8) Dutch - nl
+   ant -Dtranslate.lang=nl translate
+
+9) Polish - pl
+   ant -Dtranslate.lang=pl translate
+
+10) Czech - cs
+    ant -Dtranslate.lang=cs translate
+
+11) Turkish - tr
+    ant -Dtranslate.lang=tr translate
+
+12) Ukrainian - uk
+    ant -Dtranslate.lang=uk translate
+
+13) Arabic - ar
+    ant -Dtranslate.lang=ar translate
+
+14) Chinese - zh
+    ant -Dtranslate.lang=zh translate
+
+15) Japanese - ja
+    ant -Dtranslate.lang=ja translate

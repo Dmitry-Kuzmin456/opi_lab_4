@@ -1,0 +1,50 @@
+package managerBeans;
+
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import models.Point;
+import java.util.List;
+
+@Stateless
+public class DataBaseManager {
+
+    @PersistenceContext(unitName = "myApp")
+    private EntityManager entityManager;
+
+    @Inject
+    private AreaChecker areaChecker;
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public Point checkAndSavePoint(double x, double y, double r) {
+        if (r <= 0) {
+            throw new RuntimeException("R must be positive");
+        }
+
+        boolean status = areaChecker.isInTheSpot(x, y, r);
+        Point newPoint = new Point(x, y, r, status);
+
+        try {
+            entityManager.persist(newPoint);
+            entityManager.flush();
+
+            System.out.println("[POSTGRESQL] Point saved with ID: " + newPoint.getId());
+            return newPoint;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save point to DB: " + e.getMessage(), e);
+        }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Point> getPoints() {
+        TypedQuery<Point> query = entityManager.createQuery(
+                "SELECT p FROM Point p ORDER BY p.id DESC", Point.class
+        );
+        return query.getResultList();
+    }
+}

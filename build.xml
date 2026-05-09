@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="web-lab-3" default="build" basedir=".">
+    <property file="build.properties"/>
+
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${test.classes.dir}"/>
+        <mkdir dir="${lib.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${reports.dir}/junit"/>
+        <mkdir dir="${tmp.dir}"/>
+        <mkdir dir="${doc.dir}"/>
+    </target>
+
+    <target name="resolve-deps" depends="init">
+        <exec executable="mvn" failonerror="true">
+            <arg value="-q"/>
+            <arg value="dependency:copy-dependencies"/>
+            <arg value="-DincludeScope=test"/>
+            <arg value="-DoutputDirectory=${lib.dir}"/>
+        </exec>
+    </target>
+
+    <target name="prepare-manifest">
+        <copy file="${manifest.template}" tofile="${manifest.file}" overwrite="true"/>
+        <manifest file="${manifest.file}" mode="update">
+            <attribute name="Implementation-Version" value="${project.version}"/>
+            <attribute name="Main-Class" value="${main.class}"/>
+        </manifest>
+    </target>
+
+    <target name="compile" depends="resolve-deps">
+        <javac srcdir="${src.dir}"
+               destdir="${classes.dir}"
+               includeantruntime="false"
+               source="${java.source}"
+               target="${java.target}"
+               encoding="${encoding}">
+            <classpath refid="compile.classpath"/>
+        </javac>
+        <copy todir="${classes.dir}">
+            <fileset dir="${resources.dir}" erroronmissingdir="false"
+                     excludes="**/META-INF/persistence.xml"/>
+        </copy>
+    </target>
+
+    <target name="build" depends="compile,prepare-manifest">
+        <jar destfile="${jar.path}" manifest="${manifest.file}">
+            <fileset dir="${classes.dir}"/>
+        </jar>
+        <antcall target="music"/>
+    </target>
+
+    <target name="build-war" depends="compile">
+        <war destfile="${war.path}" webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}" excludes="WEB-INF/web.xml"/>
+            <classes dir="${classes.dir}"/>
+            <lib dir="${lib.dir}"/>
+        </war>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+        <delete file="${manifest.file}"/>
+    </target>
+
+    
