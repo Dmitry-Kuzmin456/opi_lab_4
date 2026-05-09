@@ -8,6 +8,8 @@ import managerBeans.DataBaseManager;
 import managerBeans.Validator;
 import models.Point;
 import java.io.Serializable;
+import mbeans.MBeanRegistry;
+
 
 @Named("formBean")
 @SessionScoped
@@ -21,6 +23,9 @@ public class FormBean implements Serializable {
 
     @EJB
     private DataBaseManager database;
+
+    @EJB
+    private MBeanRegistry mBeanRegistry;
 
     private Double x = 0.0;
     private Double y = 0.0;
@@ -67,6 +72,12 @@ public class FormBean implements Serializable {
         try {
             Point newPoint = database.checkAndSavePoint(x, y, r);
             pointsContainer.addPoint(newPoint);
+
+            if (mBeanRegistry != null) {
+                mBeanRegistry.getPointCounter().incrementPoints(newPoint.isStatus());
+
+                mBeanRegistry.getHitPercentage().update(newPoint.isStatus());
+            }
 
             setLastX(newPoint.getX());
             setLastY(newPoint.getY());

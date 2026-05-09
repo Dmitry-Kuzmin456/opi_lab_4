@@ -70,4 +70,4 @@
         <delete file="${manifest.file}"/>
     </target>
 
-    
+</project>
